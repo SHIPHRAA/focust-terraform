@@ -29,8 +29,14 @@ backend_memory_limit     = "512Mi"
 backend_min_instances    = 0
 backend_max_instances    = 10
 backend_allowed_members  = ["allUsers"]
-database_url             = ""  # Set via environment or secret
 data_retention_days      = 30
+
+# Database configuration (backend)
+create_database             = true
+database_tier               = "db-f1-micro"
+database_availability_type  = "ZONAL"
+database_disk_size          = 10
+database_max_connections    = "50"
 
 # Auth configuration
 auth_image_tag         = "dev-latest"

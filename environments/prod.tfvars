@@ -30,9 +30,15 @@ backend_memory_limit     = "2Gi"
 backend_min_instances    = 2
 backend_max_instances    = 100
 backend_allowed_members  = ["allUsers"]
-database_url             = ""  # Set via environment or secret
 data_retention_days      = 365
 vpc_connector            = ""  # Will be set if using VPC
+
+# Database configuration (backend)
+create_database             = true
+database_tier               = "db-n1-standard-2"
+database_availability_type  = "REGIONAL"
+database_disk_size          = 100
+database_max_connections    = "200"
 
 # Auth configuration
 auth_image_tag         = "v1.0.0"  # Use specific version tags in production

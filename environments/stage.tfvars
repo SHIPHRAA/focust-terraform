@@ -29,8 +29,14 @@ backend_memory_limit     = "1Gi"
 backend_min_instances    = 1
 backend_max_instances    = 50
 backend_allowed_members  = ["allUsers"]
-database_url             = ""  # Set via environment or secret
 data_retention_days      = 60
+
+# Database configuration (backend)
+create_database             = true
+database_tier               = "db-g1-small"
+database_availability_type  = "ZONAL"
+database_disk_size          = 20
+database_max_connections    = "100"
 
 # Auth configuration
 auth_image_tag         = "stage-latest"
