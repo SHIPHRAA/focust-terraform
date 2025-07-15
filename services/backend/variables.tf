@@ -83,9 +83,57 @@ variable "data_retention_days" {
   default     = 90
 }
 
-# Database
-variable "database_url" {
-  description = "Database connection URL"
+# Database configuration
+variable "create_database" {
+  description = "Whether to create a Cloud SQL database"
+  type        = bool
+  default     = true
+}
+
+variable "database_version" {
+  description = "PostgreSQL version"
+  type        = string
+  default     = "POSTGRES_15"
+}
+
+variable "database_tier" {
+  description = "Cloud SQL instance tier"
+  type        = string
+  default     = "db-f1-micro"
+}
+
+variable "database_availability_type" {
+  description = "Database availability type (ZONAL or REGIONAL)"
+  type        = string
+  default     = "ZONAL"
+}
+
+variable "database_disk_size" {
+  description = "Database disk size in GB"
+  type        = number
+  default     = 10
+}
+
+variable "database_max_connections" {
+  description = "Maximum number of database connections"
+  type        = string
+  default     = "100"
+}
+
+variable "database_name" {
+  description = "Name of the database"
+  type        = string
+  default     = "focust"
+}
+
+variable "database_user" {
+  description = "Database username"
+  type        = string
+  default     = "focust_user"
+}
+
+variable "vpc_network_id" {
+  description = "VPC network ID for private database access"
   type        = string
   default     = ""
 }
