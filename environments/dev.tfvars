@@ -23,7 +23,7 @@ frontend_cors_origins    = ["http://localhost:3000", "http://localhost:3001"]
 
 # Backend configuration
 backend_image_tag        = "dev-latest"
-backend_port             = 8080
+backend_port             = 8000
 backend_cpu_limit        = "1"
 backend_memory_limit     = "512Mi"
 backend_min_instances    = 0
@@ -40,7 +40,7 @@ database_max_connections    = "50"
 
 # Auth configuration
 auth_image_tag         = "dev-latest"
-auth_port              = 8080
+auth_port              = 8000
 auth_cpu_limit         = "0.5"
 auth_memory_limit      = "256Mi"
 auth_min_instances     = 0
@@ -51,7 +51,7 @@ session_duration       = "3600"
 allowed_origins        = ["http://localhost:3000", "http://localhost:3001"]
 auth_providers         = ["email", "google"]
 
-# Cross-service URLs (will be populated after deployment)
-backend_url   = ""
-auth_url      = ""
+# Cross-service URLs
+backend_url   = "http://localhost:8000"
+auth_url      = "http://localhost:8000"
 frontend_urls = ["http://localhost:3000"]

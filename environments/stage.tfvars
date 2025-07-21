@@ -23,7 +23,7 @@ frontend_cors_origins    = ["https://staging.focust.app"]
 
 # Backend configuration
 backend_image_tag        = "stage-latest"
-backend_port             = 8080
+backend_port             = 8000
 backend_cpu_limit        = "2"
 backend_memory_limit     = "1Gi"
 backend_min_instances    = 1
