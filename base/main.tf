@@ -123,3 +123,65 @@ resource "google_secret_manager_secret_version" "shared_config" {
     shared_assets_bucket  = google_storage_bucket.shared_assets.name
   })
 }
+
+# VPC and networking (conditional creation)
+resource "google_compute_network" "vpc" {
+  count                   = var.create_vpc ? 1 : 0
+  name                    = "${var.project_name}-vpc-${var.environment}"
+  project                 = var.project_id
+  auto_create_subnetworks = false
+}
+
+resource "google_compute_subnetwork" "subnet" {
+  count         = var.create_vpc ? 1 : 0
+  name          = "${var.project_name}-subnet-${var.environment}"
+  project       = var.project_id
+  ip_cidr_range = "10.0.0.0/24"
+  region        = var.region
+  network       = google_compute_network.vpc[0].id
+
+  # Enable private Google access
+  private_ip_google_access = true
+}
+
+# VPC Connector for Cloud Run to access private resources
+resource "google_vpc_access_connector" "connector" {
+  count         = var.create_vpc ? 1 : 0
+  name          = "${var.project_name}-connector-${var.environment}"
+  project       = var.project_id
+  region        = var.region
+  ip_cidr_range = "10.0.1.0/28"
+  network       = google_compute_network.vpc[0].id
+}
+
+# Enable required APIs for VPC
+resource "google_project_service" "vpc_apis" {
+  for_each = var.create_vpc ? toset([
+    "vpcaccess.googleapis.com",
+    "servicenetworking.googleapis.com"
+  ]) : []
+  
+  project = var.project_id
+  service = each.value
+
+  disable_dependent_services = true
+  disable_on_destroy         = false
+}
+
+# Private service connection for Cloud SQL
+resource "google_compute_global_address" "private_ip_address" {
+  count         = var.create_vpc ? 1 : 0
+  name          = "${var.project_name}-private-ip-${var.environment}"
+  project       = var.project_id
+  purpose       = "VPC_PEERING"
+  address_type  = "INTERNAL"
+  prefix_length = 16
+  network       = google_compute_network.vpc[0].id
+}
+
+resource "google_service_networking_connection" "private_vpc_connection" {
+  count                   = var.create_vpc ? 1 : 0
+  network                 = google_compute_network.vpc[0].id
+  service                 = "servicenetworking.googleapis.com"
+  reserved_peering_ranges = [google_compute_global_address.private_ip_address[0].name]
+}

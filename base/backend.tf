@@ -1,5 +1,6 @@
 terraform {
   backend "gcs" {
-    prefix = "focust-infra-state"
+    bucket = "focust-dev-terraform-state"
+    prefix = "base/terraform/state"
   }
 }

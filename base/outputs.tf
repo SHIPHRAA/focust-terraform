@@ -8,6 +8,11 @@ output "region" {
   value       = var.region
 }
 
+output "environment" {
+  description = "The deployment environment"
+  value       = var.environment
+}
+
 output "artifact_registry_repository_id" {
   description = "The shared Artifact Registry repository ID"
   value       = google_artifact_registry_repository.shared_repo.repository_id
@@ -41,6 +46,11 @@ output "vpc_id" {
 output "subnet_id" {
   description = "The subnet ID (if created)"
   value       = var.create_vpc ? google_compute_subnetwork.subnet[0].id : null
+}
+
+output "vpc_connector_id" {
+  description = "The VPC connector ID (if created)"
+  value       = var.create_vpc ? google_vpc_access_connector.connector[0].id : null
 }
 
 output "enabled_apis" {
