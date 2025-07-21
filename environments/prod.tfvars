@@ -55,6 +55,6 @@ auth_providers         = ["email", "google", "github"]
 vpc_connector          = ""  # Will be set if using VPC
 
 # Cross-service URLs (will be populated after deployment)
-backend_url   = ""
-auth_url      = ""
-frontend_urls = ["https://focust.app", "https://www.focust.app"]
+backend_url   = "http://localhost:8000"
+auth_url      = "http://localhost:8000"
+frontend_urls = ["http://localhost:3000"]

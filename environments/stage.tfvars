@@ -52,6 +52,6 @@ allowed_origins        = ["https://staging.focust.app"]
 auth_providers         = ["email", "google"]
 
 # Cross-service URLs (will be populated after deployment)
-backend_url   = ""
-auth_url      = ""
-frontend_urls = ["https://staging.focust.app"]
+backend_url   = "http://localhost:8000"
+auth_url      = "http://localhost:8000"
+frontend_urls = ["http://localhost:3000"]
