@@ -94,7 +94,7 @@ resource "google_service_account" "service_account" {
 
 # Grant necessary permissions to service account
 resource "google_project_iam_member" "service_account_roles" {
-  for_each = var.service_account_email == "" ? var.service_account_roles : {}
+  for_each = var.service_account_email == "" ? var.service_account_roles : toset([])
   
   project = var.project_id
   role    = each.value

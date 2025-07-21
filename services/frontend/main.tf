@@ -5,7 +5,7 @@ data "terraform_remote_state" "base" {
   backend = "gcs"
   config = {
     bucket = var.terraform_state_bucket
-    prefix = "focust-infra-state"
+    prefix = "base/terraform/state"
   }
 }
 
@@ -15,18 +15,19 @@ module "frontend" {
 
   # Basic configuration
   service_name = "focust-frontend"
-  region       = var.region
-  project_id   = var.project_id
-  environment  = var.environment
+  region       = data.terraform_remote_state.base.outputs.region
+  project_id   = data.terraform_remote_state.base.outputs.project_id
+  environment  = data.terraform_remote_state.base.outputs.environment
 
   # Container configuration
   artifact_registry_url = data.terraform_remote_state.base.outputs.artifact_registry_url
+  container_image       = "${data.terraform_remote_state.base.outputs.artifact_registry_url}/focustfrontend:${var.frontend_image_tag}"
   image_tag             = var.frontend_image_tag
   container_port        = var.frontend_port
 
   # Environment variables
   env_vars = {
-    NODE_ENV = var.environment
+    NODE_ENV = data.terraform_remote_state.base.outputs.environment
     PORT     = tostring(var.frontend_port)
   }
 

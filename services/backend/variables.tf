@@ -1,20 +1,10 @@
-variable "project_id" {
-  description = "The GCP project ID"
-  type        = string
-}
-
-variable "region" {
-  description = "The GCP region"
-  type        = string
-}
-
-variable "environment" {
-  description = "The deployment environment"
-  type        = string
-}
-
 variable "terraform_state_bucket" {
   description = "The GCS bucket for Terraform state"
+  type        = string
+}
+
+variable "project_id" {
+  description = "The GCP project ID"
   type        = string
 }
 

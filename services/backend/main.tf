@@ -1,60 +1,22 @@
 # Backend service configuration
 
-variable "create_database" {
-  description = "Whether to create the backend Cloud SQL database and related resources"
-  type        = bool
-  default     = false
+# Enable SQL Admin API for database management
+resource "google_project_service" "sqladmin" {
+  count   = var.create_database ? 1 : 0
+  project = data.terraform_remote_state.base.outputs.project_id
+  service = "sqladmin.googleapis.com"
+
+  disable_dependent_services = true
+  disable_on_destroy         = false
 }
 
-variable "database_version" {
-  description = "The version of the Cloud SQL database (e.g., POSTGRES_13, MYSQL_8_0)"
-  type        = string
-}
-
-variable "database_availability_type" {
-  description = "The availability type for the Cloud SQL instance (e.g., ZONAL, REGIONAL)"
-  type        = string
-  default     = "ZONAL"
-}
-
-variable "database_tier" {
-  description = "The machine type (tier) for the Cloud SQL instance (e.g., db-f1-micro, db-g1-small, db-custom-1-3840)"
-  type        = string
-}
-
-variable "database_max_connections" {
-  description = "The maximum number of database connections for the Cloud SQL instance"
-  type        = number
-  default     = 100
-}
-
-variable "database_disk_size" {
-  description = "The disk size (in GB) for the Cloud SQL instance"
-  type        = number
-  default     = 10
-}
-
-variable "database_name" {
-  description = "The name of the backend database to create"
-  type        = string
-}
-
-variable "database_user" {
-  description = "The username for the backend database user"
-  type        = string
-}
-
-variable "vpc_network_id" {
-  description = "The ID of the VPC network to use for private IP configuration"
-  type        = string
-}
 
 # Data source to read base infrastructure outputs
 data "terraform_remote_state" "base" {
   backend = "gcs"
   config = {
     bucket = var.terraform_state_bucket
-    prefix = "focust-infra-state"
+    prefix = "base/terraform/state"
   }
 }
 
@@ -64,18 +26,19 @@ module "backend" {
 
   # Basic configuration
   service_name = "focust-backend"
-  region       = var.region
-  project_id   = var.project_id
-  environment  = var.environment
+  region       = data.terraform_remote_state.base.outputs.region
+  project_id   = data.terraform_remote_state.base.outputs.project_id
+  environment  = data.terraform_remote_state.base.outputs.environment
 
   # Container configuration
   artifact_registry_url = data.terraform_remote_state.base.outputs.artifact_registry_url
+  container_image       = "${data.terraform_remote_state.base.outputs.artifact_registry_url}/focustbackend:${var.backend_image_tag}"
   image_tag             = var.backend_image_tag
   container_port        = var.backend_port
 
   # Environment variables
   env_vars = {
-    NODE_ENV    = var.environment
+    NODE_ENV    = data.terraform_remote_state.base.outputs.environment
     PORT        = tostring(var.backend_port)
     AUTH_URL    = var.auth_url
   }
@@ -112,7 +75,7 @@ module "backend" {
   create_config_secret = true
   config_secret_data = {
     auth_url      = var.auth_url
-    frontend_urls = var.frontend_urls
+    frontend_urls = jsonencode(var.frontend_urls)
   }
 
   # VPC configuration (if using private services)
@@ -123,10 +86,10 @@ module "backend" {
 # Create Cloud SQL instance for backend database
 resource "google_sql_database_instance" "backend_db" {
   count            = var.create_database ? 1 : 0
-  name             = "focust-backend-db-${var.environment}"
+  name             = "focust-backend-db-${data.terraform_remote_state.base.outputs.environment}"
   database_version = var.database_version
-  region           = var.region
-  project          = var.project_id
+  region           = data.terraform_remote_state.base.outputs.region
+  project          = data.terraform_remote_state.base.outputs.project_id
 
   settings {
     tier              = var.database_tier
@@ -138,11 +101,11 @@ resource "google_sql_database_instance" "backend_db" {
     backup_configuration {
       enabled                        = true
       start_time                     = "03:00"
-      location                       = var.region
-      point_in_time_recovery_enabled = var.environment == "production"
-      transaction_log_retention_days = var.environment == "production" ? 7 : 1
+      location                       = data.terraform_remote_state.base.outputs.region
+      point_in_time_recovery_enabled = data.terraform_remote_state.base.outputs.environment == "production"
+      transaction_log_retention_days = data.terraform_remote_state.base.outputs.environment == "production" ? 7 : 1
       backup_retention_settings {
-        retained_backups = var.environment == "production" ? 30 : 7
+        retained_backups = data.terraform_remote_state.base.outputs.environment == "production" ? 30 : 7
         retention_unit   = "COUNT"
       }
     }
@@ -154,11 +117,10 @@ resource "google_sql_database_instance" "backend_db" {
 
     ip_configuration {
       ipv4_enabled    = true
-      private_network = var.vpc_network_id
       
       # Allow Cloud Run access (will be restricted in production)
       dynamic "authorized_networks" {
-        for_each = var.environment != "production" ? [1] : []
+        for_each = data.terraform_remote_state.base.outputs.environment != "production" ? [1] : []
         content {
           name  = "allow-all-dev"
           value = "0.0.0.0/0"
@@ -174,7 +136,9 @@ resource "google_sql_database_instance" "backend_db" {
     }
   }
 
-  deletion_protection = var.environment == "production"
+  deletion_protection = data.terraform_remote_state.base.outputs.environment == "production"
+
+  depends_on = [google_project_service.sqladmin]
 }
 
 # Create database
@@ -204,7 +168,7 @@ resource "random_password" "database_password" {
 # Store database URL in Secret Manager
 resource "google_secret_manager_secret" "database_url" {
   count     = var.create_database ? 1 : 0
-  secret_id = "focust-backend-database-url-${var.environment}"
+  secret_id = "focust-backend-database-url-${data.terraform_remote_state.base.outputs.environment}"
   project   = var.project_id
 
   replication {
